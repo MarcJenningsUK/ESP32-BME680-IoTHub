@@ -140,7 +140,7 @@ void setup() {
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 
-  send_interval_ms = millis() - 50000;
+  send_interval_ms = millis() - (INTERVAL - 10000);  // make sure first message is sent after 10 sec.
 
 }
 

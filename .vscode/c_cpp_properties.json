@@ -6,6 +6,7 @@
                 "ARDUINO=10800"
             ],
             "includePath": [
+                "C:\\Users\\m.jennings\\OneDrive - Avanade\\Documents\\Arduino\\libraries\\M5Stack\\src",
                 "C:\\Users\\m.jennings\\OneDrive - Avanade\\Documents\\Arduino\\libraries\\Adafruit_BME680_Library",
                 "C:\\Users\\m.jennings\\OneDrive - Avanade\\Documents\\Arduino\\libraries\\Adafruit_Unified_Sensor",
                 "C:\\Users\\m.jennings\\OneDrive - Avanade\\Documents\\Arduino\\libraries\\Adafruit_BME280_Library",

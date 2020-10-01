@@ -1,8 +1,6 @@
-
-
-/**
- * A simple Azure IoT example for sending telemetry to Iot Hub.
- */
+#include <Free_Fonts.h>
+#include <M5Display.h>
+#include <M5Stack.h>
 
 #include <WiFi.h>
 #include "Esp32MQTTClient.h"
@@ -11,21 +9,36 @@
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BME680.h"
 
+// ----------------------------------------------------
+// secinfo.h must be configured.
+//
+// SAMPLE DATA
+///////////////////////////
+// #ifndef FILE_FOO_SEEN
+// #define FILE_FOO_SEEN
+//
+// // Please input the SSID and password of WiFi
+// const char* ssid     = "<your SSID>>";
+// const char* password = "<your PSK>>";
+//
+// /*String containing Hostname, Device Id & Device Key in the format:                         */
+// /*  "HostName=<host_name>;DeviceId=<device_id>;SharedAccessKey=<device_key>"                */
+// /*  "HostName=<host_name>;DeviceId=<device_id>;SharedAccessSignature=<device_sas_token>"    */
+// //static const char* connectionString = "";
+// 
+// static const char* connectionString = "<your device copnnection string>";
+//
+// #endif /* !FILE_FOO_SEEN */
+//------------------------------------------------------
+
 #include "secinfo.h"
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
 Adafruit_BME680 bme; // I2C
 
-#define INTERVAL 60000
+#define INTERVAL 30000
 #define MESSAGE_MAX_LEN 256
-// Please input the SSID and password of WiFi
-
-
-/*String containing Hostname, Device Id & Device Key in the format:                         */
-/*  "HostName=<host_name>;DeviceId=<device_id>;SharedAccessKey=<device_key>"                */
-/*  "HostName=<host_name>;DeviceId=<device_id>;SharedAccessSignature=<device_sas_token>"    */
-//static const char* connectionString = "";
 
 const char *messageData = "{\"messageId\":%d, \"Temperature\":%f, \"Humidity\":%f, \"Pressure\":%f, \"Gas\":%f}";
 static bool hasIoTHub = false;
@@ -94,6 +107,13 @@ static int  DeviceMethodCallback(const char *methodName, const unsigned char *pa
 
 
 void setup() {
+  
+  M5.begin();
+  
+  M5.Power.begin();
+
+  logToDisplay("Starting up...");
+
   Serial.begin(115200);
   Serial.println("ESP32 Device");
   Serial.println("Initializing...");
@@ -111,6 +131,7 @@ void setup() {
   hasWifi = true;
   
   Serial.println("WiFi connected");
+  logToDisplay("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   Serial.println(" > IoT Hub");
@@ -120,6 +141,9 @@ void setup() {
     Serial.println("Initializing IoT hub failed.");
     return;
   }
+
+  logToDisplay("IoT hub connected...");
+    
   hasIoTHub = true;
   Esp32MQTTClient_SetSendConfirmationCallback(SendConfirmationCallback);
   Esp32MQTTClient_SetMessageCallback(MessageCallback);
@@ -130,6 +154,8 @@ void setup() {
 
   if (!bme.begin(0x76)) {
     Serial.println("Could not find a valid BME680 sensor, check wiring!");
+    
+    logToDisplay("Could not find a valid BME680 sensor, check wiring!");
     while (1);
   }
 
@@ -142,6 +168,50 @@ void setup() {
 
   send_interval_ms = millis() - (INTERVAL - 10000);  // make sure first message is sent after 10 sec.
 
+}
+
+void logToDisplay(char* msg) {
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(10, 10);
+  M5.Lcd.setTextColor(WHITE);
+  M5.Lcd.setTextSize(3);
+  M5.Lcd.printf("%s", msg);
+}
+
+int8_t getBatteryLevel()
+{
+  Wire.beginTransmission(0x75);
+  Wire.write(0x78);
+  if (Wire.endTransmission(false) == 0
+   && Wire.requestFrom(0x75, 1)) {
+    switch (Wire.read() & 0xF0) {
+    case 0xE0: return 25;
+    case 0xC0: return 50;
+    case 0x80: return 75;
+    case 0x00: return 100;
+    default: return 0;
+    }
+  }
+  return -1;
+}
+
+void logToDisplay(float temp, float hum, float pres, float gas) {
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextColor(WHITE);
+  M5.Lcd.setTextSize(3);
+  
+  M5.Lcd.setCursor(10, 10);
+  M5.Lcd.printf("T : %f", temp);
+  M5.Lcd.setCursor(10, 60);
+  M5.Lcd.printf("H : %f", hum);
+  M5.Lcd.setCursor(10, 110);
+  M5.Lcd.printf("P : %f", pres);
+  M5.Lcd.setCursor(10, 160);
+  M5.Lcd.printf("G : %f", gas);
+
+  M5.Lcd.setCursor(10, 210);
+  M5.Lcd.print(getBatteryLevel());
+  M5.Lcd.print("%");
 }
 
 void loop() {
@@ -166,6 +236,7 @@ if (hasWifi && hasIoTHub)
       EVENT_INSTANCE* message = Esp32MQTTClient_Event_Generate(messagePayload, MESSAGE);
       Esp32MQTTClient_SendEventInstance(message);
       send_interval_ms = millis();
+      logToDisplay(temperature, humidity, pressure, gasR);
     }
     else
     {

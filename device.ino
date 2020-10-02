@@ -75,7 +75,7 @@ static void DeviceTwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsig
   free(temp);
 }
 
-static int  DeviceMethodCallback(const char *methodName, const unsigned char *payload, int size, unsigned char **response, int *response_size)
+static int DeviceMethodCallback(const char *methodName, const unsigned char *payload, int size, unsigned char **response, int *response_size)
 {
   LogInfo("Try to invoke method %s", methodName);
   const char *responseMessage = "\"Successfully invoke device method\"";
@@ -166,7 +166,7 @@ void setup() {
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 
-  send_interval_ms = millis() - (INTERVAL - 10000);  // make sure first message is sent after 10 sec.
+  send_interval_ms = millis() - (INTERVAL - 5000);  // make sure first message is sent after 10 sec.
 
 }
 
@@ -198,17 +198,28 @@ int8_t getBatteryLevel()
 void logToDisplay(float temp, float hum, float pres, float gas) {
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setTextColor(WHITE);
-  M5.Lcd.setTextSize(3);
+  M5.Lcd.setTextSize(2);
   
-  M5.Lcd.setCursor(10, 10);
-  M5.Lcd.printf("T : %f", temp);
-  M5.Lcd.setCursor(10, 60);
-  M5.Lcd.printf("H : %f", hum);
-  M5.Lcd.setCursor(10, 110);
-  M5.Lcd.printf("P : %f", pres);
-  M5.Lcd.setCursor(10, 160);
-  M5.Lcd.printf("G : %f", gas);
+  char outstr[15];
 
+  M5.Lcd.setCursor(10, 10);
+  
+  dtostrf(temp,7, 2, outstr);
+  M5.Lcd.printf("T : %s", outstr);
+  
+  M5.Lcd.setCursor(10, 50);
+  dtostrf(hum,7, 2, outstr);
+  M5.Lcd.printf("H : %s", outstr);
+  M5.Lcd.print("%");
+
+  M5.Lcd.setCursor(10, 90);
+  dtostrf(pres,7, 2, outstr);
+  M5.Lcd.printf("P : %s", outstr);
+
+  M5.Lcd.setCursor(10, 130);
+  dtostrf(gas,7, 2, outstr);
+  M5.Lcd.printf("G : %s", outstr);
+  
   M5.Lcd.setCursor(10, 210);
   M5.Lcd.print(getBatteryLevel());
   M5.Lcd.print("%");
